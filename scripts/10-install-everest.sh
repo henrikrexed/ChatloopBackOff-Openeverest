@@ -11,15 +11,23 @@
 #     PostgreSQL operator — deploy the db-namespace chart as its own release.
 #   * Chart hooks are required; do not pass `--no-hooks`.
 #   * Assumes the `openeverest` Helm repo was added by scripts/00-prereqs.sh.
+#   * The db-namespace chart runs an `everest-operators-installer` HOOK job that
+#     installs the Percona operator(s) via OLM. This can take well over Helm's
+#     DEFAULT 5m `--timeout`, so both installs pass `--timeout 15m`. Without it,
+#     `helm install` reports the release `failed`/`pending-install` (and would need
+#     `helm uninstall` before retry) even though the operator eventually comes up.
+#     Do NOT Ctrl-C a slow install — let it finish.
 set -euo pipefail
 
 DB_NS="${DB_NS:-everest-dbs}"
 CHART_VERSION="${CHART_VERSION:-1.16.2}"
+HELM_TIMEOUT="${HELM_TIMEOUT:-15m}"
 
 echo ">> (1/3) Installing Everest core via Helm (namespace: everest-system)..."
 helm install everest openeverest/openeverest \
   --namespace everest-system --create-namespace \
-  --version "${CHART_VERSION}"
+  --version "${CHART_VERSION}" \
+  --timeout "${HELM_TIMEOUT}"
 
 echo ">> (2/3) Deploying DB namespace '${DB_NS}' with the PostgreSQL operator only..."
 # The everest-db-namespace chart's operator toggles are TOP-LEVEL keys (verified
@@ -31,6 +39,7 @@ echo ">> (2/3) Deploying DB namespace '${DB_NS}' with the PostgreSQL operator on
 helm install everest openeverest/everest-db-namespace \
   --namespace "${DB_NS}" --create-namespace \
   --version "${CHART_VERSION}" \
+  --timeout "${HELM_TIMEOUT}" \
   --set pxc=false \
   --set psmdb=false
 
