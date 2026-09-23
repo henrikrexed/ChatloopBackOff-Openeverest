@@ -17,6 +17,9 @@ metadata:
   name: demo-pg
   namespace: everest-dbs
 spec:
+  # paused: true   # optional — suspends the cluster (scales pods to 0) without
+  #                # deleting it; flip back to false to resume. Handy for pausing a
+  #                # demo cluster overnight. Left commented so the tutorial runs live.
   engine:
     type: postgresql
     # 17.4 is NOT offered by operator v3.0.0 (only 17.7 / 17.9 / 17.10). Pin 17.10.

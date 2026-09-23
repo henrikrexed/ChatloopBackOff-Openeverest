@@ -16,6 +16,10 @@
 #
 # The demo's init.sql itself runs `CREATE USER otelu ...` and builds the
 # accounting/reviews/catalog schemas, so we only create the database + extension.
+#
+# NOTE: `postgres:17` ships `psql` but NOT `curl`/`wget`, so init.sql is fetched by
+# a `curlimages/curl` initContainer into a shared emptyDir (`/work`) that the
+# postgres container then loads. (A single postgres-image container cannot curl.)
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -26,23 +30,41 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      containers:
-        - name: seed
-          image: postgres:17
+      volumes:
+        - name: initsql
+          emptyDir: {}
+      # The postgres:17 image ships psql but NOT curl/wget, so a here-container
+      # can't fetch init.sql itself. An initContainer using the curl image
+      # downloads it into a shared emptyDir; the postgres container then loads it.
+      initContainers:
+        - name: fetch-initsql
+          image: curlimages/curl:8.11.1
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -eu
               echo "Fetching demo init.sql (pinned to app 2.2.0)..."
-              curl -fsSL -o /tmp/init.sql \
+              curl -fsSL -o /work/init.sql \
                 https://raw.githubusercontent.com/open-telemetry/opentelemetry-demo/2.2.0/src/postgresql/init.sql
+              echo "Fetched $(wc -l < /work/init.sql) lines."
+          volumeMounts:
+            - { name: initsql, mountPath: /work }
+      containers:
+        - name: seed
+          image: postgres:17
+          command: ["/bin/sh", "-c"]
+          volumeMounts:
+            - { name: initsql, mountPath: /work }
+          args:
+            - |
+              set -eu
               export PGSSLMODE=require
               echo "Creating database 'otel' (idempotent)..."
               psql -h "$PGHOST" -U "$PGUSER" -d postgres \
                 -tc "SELECT 1 FROM pg_database WHERE datname='otel'" | grep -q 1 \
                 || psql -h "$PGHOST" -U "$PGUSER" -d postgres -c "CREATE DATABASE otel"
               echo "Loading OTel Demo schema/data into 'otel'..."
-              psql -h "$PGHOST" -U "$PGUSER" -d otel -v ON_ERROR_STOP=1 -f /tmp/init.sql
+              psql -h "$PGHOST" -U "$PGUSER" -d otel -v ON_ERROR_STOP=1 -f /work/init.sql
               echo "Creating pg_stat_statements extension..."
               psql -h "$PGHOST" -U "$PGUSER" -d otel \
                 -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements"

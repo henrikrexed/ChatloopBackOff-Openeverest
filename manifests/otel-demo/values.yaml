@@ -9,9 +9,18 @@
 # The bundled Postgres (`postgresql`) is ENABLED here; the live Everest swap
 # overlay (manifests/everest/otel-demo-everest-values.yaml) disables it.
 # frontend-proxy is a LoadBalancer so the storefront gets an external IP.
+#
+# NOTE: `frontend-proxy` is a COMPONENT — it must live under `components:` (chart
+# 0.40.10 `values.schema.json` sets additionalProperties=false at the root, so a
+# root-level `frontend-proxy:` fails with "Additional property ... not allowed").
+# The `jaeger`/`grafana`/`prometheus`/`opensearch`/`opentelemetry-collector` keys
+# ARE root-level (they are conditional sub-charts, not components).
 components:
   postgresql:
     enabled: true
+  frontend-proxy:
+    service:
+      type: LoadBalancer
 opentelemetry-collector:
   enabled: true
 jaeger:
@@ -22,6 +31,3 @@ prometheus:
   enabled: true
 opensearch:
   enabled: true
-frontend-proxy:
-  service:
-    type: LoadBalancer

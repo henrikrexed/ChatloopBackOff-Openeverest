@@ -1,9 +1,19 @@
 # Tutorial: Run the OpenTelemetry Demo on an OpenEverest-provisioned PostgreSQL
 
-> **Status:** technical steps validated end-to-end against a real cluster on
-> 2026-09-23 (everestctl v1.16.2 · Percona PG operator v3.0.0 · PostgreSQL 17.10 ·
-> otel-demo chart 0.40.10 / app 2.2.0). Do not change any command or version without
-> re-validating against a real cluster.
+> **Status:** provision → seed → swap → observe were validated end-to-end against a
+> real cluster on 2026-09-23 (OpenEverest v1.16.2 · Percona PG operator v3.0.0 ·
+> PostgreSQL 17.10 · otel-demo chart 0.40.10 / app 2.2.0). Do not change any command or
+> version without re-validating against a real cluster.
+>
+> **Install (Step 2) now follows the official OpenEverest Helm chart procedure**
+> ([1.16.2 docs](https://openeverest.io/documentation/1.16.2/install/install_everest_helm_charts.html)),
+> replacing the earlier `everestctl` path — **re-validated live on 2026-09-23**:
+> Helm core install → `everest-db-namespace` (PostgreSQL-only) → `databaseengine
+> percona-postgresql-operator` v3.0.0 offering PG 17.10 → `demo-pg` provisioned
+> `ready` → seed loaded (`products=10`, `reviews=50`) → swap connection string
+> verified against the PgBouncer LoadBalancer. See the troubleshooting list for the
+> defects this re-validation caught (curl-less seed image, `frontend-proxy` value
+> placement, Helm hook timeout, db-namespace flag keys).
 
 ## What you'll build
 
@@ -54,7 +64,7 @@ See [prerequisites.md](./prerequisites.md). In short: a Kubernetes cluster with 
 stalls), a **LoadBalancer** implementation, and `kubectl` + `helm` on PATH.
 
 ```sh
-./scripts/00-prereqs.sh      # installs everestctl, adds the OTel Helm repo
+./scripts/00-prereqs.sh      # adds the OpenEverest + OTel Helm repos
 ```
 
 ## Step 1 — Deploy the OTel Demo (baseline)
@@ -71,11 +81,15 @@ kubectl -n otel-demo get svc frontend-proxy   # note the LoadBalancer EXTERNAL-I
 # open http://<EXTERNAL-IP>:8080 → products visible, checkout works
 ```
 
-## Step 2 — Install OpenEverest
+## Step 2 — Install OpenEverest (Helm)
 
-> ⚠️ **Gotcha:** `everestctl install --namespaces <ns>` does **not** create the DB
-> namespace or the PostgreSQL operator on v1.16.2. Adding the namespace is a
-> separate command — the script below does both.
+Install OpenEverest from its official Helm chart, following the
+[1.16.2 install guide](https://openeverest.io/documentation/1.16.2/install/install_everest_helm_charts.html).
+
+> ⚠️ **Gotcha:** the core chart only installs the Everest control plane into the fixed
+> `everest-system` namespace — it does **not** create the DB namespace or the PostgreSQL
+> operator. Database namespaces are a **separate** chart (`openeverest/everest-db-namespace`).
+> The script below installs both releases.
 
 ```sh
 ./scripts/10-install-everest.sh
@@ -84,10 +98,27 @@ kubectl -n otel-demo get svc frontend-proxy   # note the LoadBalancer EXTERNAL-I
 This runs:
 
 ```sh
-everestctl install --skip-wizard
-everestctl namespaces add everest-dbs \
-  --operator.postgresql=true --operator.mysql=false --operator.mongodb=false --skip-wizard
-everestctl accounts initial-admin-password        # rotate before any public use
+# 1) Everest control plane (fixed namespace `everest-system` on 1.16.2)
+helm install everest openeverest/openeverest \
+  --namespace everest-system --create-namespace --version 1.16.2 \
+  --timeout 15m
+
+# 2) A PostgreSQL-only database namespace. The operator toggles are TOP-LEVEL keys
+#    (pxc=MySQL, psmdb=MongoDB → both disabled; postgresql defaults to true).
+#    NOTE: they are NOT nested under `dbNamespace.*` — `--set dbNamespace.pxc=false`
+#    is silently ignored and installs all three operators.
+#    --timeout 15m: the operator-installer HOOK (OLM) exceeds Helm's default 5m.
+helm install everest openeverest/everest-db-namespace \
+  --namespace everest-dbs --create-namespace --version 1.16.2 \
+  --timeout 15m \
+  --set pxc=false \
+  --set psmdb=false
+
+# 3) Initial admin password hash (rotate before any public use):
+kubectl get secret everest-accounts -n everest-system \
+  -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
+#    Set a known admin password with the optional everestctl companion CLI:
+#      everestctl accounts set-password --username admin
 ```
 
 Everest does **not** require cert-manager. Optionally open the UI:
@@ -177,6 +208,15 @@ spans point, not as a leap of faith.
   the demo services now depend on an external PostgreSQL host, and its query load is
   attributed back to the calling services.
 
+> **Aside — Everest-native monitoring (PMM).** The observability story above is the
+> *application's* OpenTelemetry instrumentation, which is the point of this tutorial.
+> OpenEverest also ships its own database-monitoring integration via **PMM** (Percona
+> Monitoring & Management): enable it at install with `--set pmm.enabled=true`, then
+> wire it up under **Settings → Monitoring endpoints** in the Everest UI. See the
+> [1.16.2 monitoring-endpoints docs](https://openeverest.io/documentation/1.16.2/use/monitor_endpoints.html).
+> It's an alternative *database-side* view — complementary to, not a replacement for,
+> the OTel/Jaeger/Dynatrace path above. This tutorial does not use it.
+
 Two screenshots make this land — capture them live during the walkthrough:
 
 ![Jaeger service map / trace waterfall showing a product-catalog request whose PostgreSQL span now targets the Everest PgBouncer endpoint.](images/jaeger-service-map.png)
@@ -188,7 +228,7 @@ Two screenshots make this land — capture them live during the walkthrough:
 
 ![OpenEverest UI database view showing the demo-pg PostgreSQL 17.10 cluster in state ready, with its PgBouncer endpoint and connection details.](images/everest-ui-db-view.png)
 
-> **Screenshot — Everest UI:** the `demo-pg` cluster detail page (`everestctl` UI,
+> **Screenshot — Everest UI:** the `demo-pg` cluster detail page (Everest UI,
 > port-forwarded in Step 2), showing engine **PostgreSQL 17.10**, state **ready**, and
 > the exposed connection endpoint. This is the "managed database" half of the story —
 > the same database the Jaeger span is now hitting. _(Capture during the stream; drop the
@@ -200,17 +240,23 @@ Two screenshots make this land — capture them live during the walkthrough:
 ./scripts/90-teardown.sh
 ```
 
-Reverts the demo to its bundled DB, deletes the DatabaseCluster, uninstalls
-Everest, and removes the residual `*.pgv2.percona.com` CRDs that `everestctl
-uninstall` leaves behind.
+Reverts the demo to its bundled DB, deletes the DatabaseCluster, uninstalls both
+Everest Helm releases (`helm uninstall everest` in `everest-dbs` then `everest-system`),
+and removes the residual `*.pgv2.percona.com` CRDs that survive the Helm uninstall
+(the Percona operator's CRDs are cluster-scoped).
 
 ## Troubleshooting / gotchas (all hit during the real dry-run)
 
-1. `everestctl install --namespaces` doesn't create the DB namespace/operator → add it separately.
+1. The `openeverest/openeverest` core chart doesn't create the DB namespace/operator → install the separate `openeverest/everest-db-namespace` chart.
+   - Its operator toggles are **top-level** keys (`pxc` / `psmdb` / `postgresql`), *not* `dbNamespace.*`. `--set dbNamespace.pxc=false` is silently ignored and installs all three operators — use `--set pxc=false --set psmdb=false`.
+   - The `everest-operators-installer` **hook** (OLM) can run longer than Helm's default **5m** `--timeout`, so the install may report `failed`/`pending-install` even though the operator is still coming up. Pass `--timeout 15m` and don't Ctrl-C. A release left `pending-install` must be `helm uninstall`ed before you can re-`helm install`.
 2. PostgreSQL 17.4 unavailable on operator v3.0.0 → pin 17.10.
 3. `expose.type: external` is deprecated → use `LoadBalancer`.
 4. The pguser Secret has **no `uri` key** → build the conn string from `user`/`password`.
 5. `pg_stat_statements` preloads but isn't installed → `CREATE EXTENSION` in the seed.
 6. The demo uses db `otel` / user `otelu`, **not** `astronomy_db` / `astronomy_user`.
 7. The bundled DB component is `postgresql`, **not** `astronomy-db`.
-8. `everestctl uninstall` leaves Percona CRDs → delete them manually (teardown script does this).
+8. `helm uninstall` leaves the cluster-scoped Percona CRDs → delete them manually (teardown script does this).
+9. The `postgres:17` image ships `psql` but **no `curl`/`wget`** → the seed fetches `init.sql` via a `curlimages/curl` initContainer into a shared volume (see [`seed-job.yaml`](../manifests/everest/seed-job.yaml)).
+10. `frontend-proxy` is a **component** → it must live under `components:` in the demo values, not at the root (chart 0.40.10's root schema is `additionalProperties: false`). `jaeger`/`grafana`/`prometheus`/`opensearch`/`opentelemetry-collector` stay root-level (they are sub-charts).
+11. `helm install`'s default `--timeout` is **5m**, but the db-namespace chart's OLM operator-installer hook can exceed it → pass `--timeout 15m` (see Step 2).

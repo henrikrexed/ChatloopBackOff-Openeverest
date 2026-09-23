@@ -75,10 +75,10 @@ episode walks the same six steps, in the same order, against the same pinned ver
 ## Quickstart
 
 ```sh
-./scripts/00-prereqs.sh                       # everestctl + Helm repo
+./scripts/00-prereqs.sh                       # add OpenEverest + OTel Helm repos
 helm upgrade --install otel-demo open-telemetry/opentelemetry-demo \
   -n otel-demo --create-namespace --version 0.40.10 -f manifests/otel-demo/values.yaml
-./scripts/10-install-everest.sh               # install Everest + PG operator
+./scripts/10-install-everest.sh               # helm install Everest + PG-only DB namespace
 ./scripts/20-provision-postgres.sh            # provision PostgreSQL 17.10
 ./scripts/30-seed-database.sh                 # load the demo schema/data
 EVEREST_LB_IP=<printed above> ./scripts/40-swap-demo.sh   # swap the demo onto Everest
@@ -90,7 +90,7 @@ Full walkthrough with explanations: **[docs/tutorial.md](docs/tutorial.md)**.
 
 ## Validated versions
 
-everestctl **v1.16.2** · Percona PG operator **v3.0.0** · PostgreSQL **17.10** ·
+OpenEverest **v1.16.2** (Helm chart) · Percona PG operator **v3.0.0** · PostgreSQL **17.10** ·
 opentelemetry-demo chart **0.40.10** / app **2.2.0**. See
 [docs/prerequisites.md](docs/prerequisites.md).
 

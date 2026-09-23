@@ -17,18 +17,20 @@ validated on Kubernetes v1.35, but any reasonably recent cluster works.
 |---|---|---|
 | `kubectl` | matches your cluster | https://kubernetes.io/docs/tasks/tools/ |
 | `helm` | v3.x | https://helm.sh/docs/intro/install/ |
-| `everestctl` | v1.16.2 | installed by `scripts/00-prereqs.sh` |
+| `yq` | v4.x | https://github.com/mikefarah/yq — used to read the admin password from the `everest-accounts` secret |
+| `everestctl` *(optional)* | v1.16.2 | Only needed for account management (e.g. `everestctl accounts set-password`). OpenEverest itself installs via Helm. https://github.com/openeverest/openeverest/releases |
 
 ## Pinned versions (validated 2026-09-23)
 
 | Component | Version |
 |---|---|
-| everestctl / Everest server | v1.16.2 |
+| OpenEverest (Helm chart / server) | v1.16.2 |
 | Percona PostgreSQL operator | v3.0.0 |
 | PostgreSQL (provisioned) | 17.10 |
 | opentelemetry-demo (Helm chart / app) | 0.40.10 / 2.2.0 |
 | cert-manager (optional, for Dynatrace) | v1.19.1 |
 | dynatrace-operator (optional) | v1.6.0 |
 
-Run `scripts/00-prereqs.sh` to install `everestctl` and add the OpenTelemetry Helm
-repo, then follow [tutorial.md](./tutorial.md).
+Run `scripts/00-prereqs.sh` to add the OpenEverest + OpenTelemetry Helm repos, then
+follow [tutorial.md](./tutorial.md). OpenEverest is installed via its Helm chart in
+Step 2.
