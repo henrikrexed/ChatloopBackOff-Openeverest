@@ -208,6 +208,15 @@ spans point, not as a leap of faith.
   the demo services now depend on an external PostgreSQL host, and its query load is
   attributed back to the calling services.
 
+> **Aside — Everest-native monitoring (PMM).** The observability story above is the
+> *application's* OpenTelemetry instrumentation, which is the point of this tutorial.
+> OpenEverest also ships its own database-monitoring integration via **PMM** (Percona
+> Monitoring & Management): enable it at install with `--set pmm.enabled=true`, then
+> wire it up under **Settings → Monitoring endpoints** in the Everest UI. See the
+> [1.16.2 monitoring-endpoints docs](https://openeverest.io/documentation/1.16.2/use/monitor_endpoints.html).
+> It's an alternative *database-side* view — complementary to, not a replacement for,
+> the OTel/Jaeger/Dynatrace path above. This tutorial does not use it.
+
 Two screenshots make this land — capture them live during the walkthrough:
 
 ![Jaeger service map / trace waterfall showing a product-catalog request whose PostgreSQL span now targets the Everest PgBouncer endpoint.](images/jaeger-service-map.png)
