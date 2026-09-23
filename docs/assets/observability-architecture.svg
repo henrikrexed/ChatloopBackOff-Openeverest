@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05070D"/><stop offset="1" stop-color="#0B0F1A"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4FB8FF"/><stop offset="45%" stop-color="#2A86E8"/><stop offset="70%" stop-color="#2466C7"/><stop offset="100%" stop-color="#0E2A6A"/>
+    </linearGradient>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto"><path d="M1,1 L10,6 L1,11 z" fill="#4FB8FF"/></marker>
+    <marker id="aData" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto"><path d="M1,1 L10,6 L1,11 z" fill="#F5A623"/></marker>
+    <marker id="aTel" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto"><path d="M1,1 L10,6 L1,11 z" fill="#7FD98A"/></marker>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <text x="140" y="102" font-family="Inter" font-weight="700" font-size="30" letter-spacing="8" fill="#4FB8FF">THE DEMO ARCHITECTURE  ·  PROVISION → CONSUME → OBSERVE</text>
+  <text x="138" y="166" font-family="Inter" font-weight="900" font-size="56" fill="#F4F8FF">The database moves — the observability doesn't miss a beat</text>
+  <rect x="140" y="190" width="420" height="7" rx="3.5" fill="url(#brand)"/>
+
+  <!-- cluster boundary -->
+  <rect x="120" y="228" width="1680" height="700" rx="22" fill="#0A1120" stroke="#22314C" stroke-width="2.5"/>
+  <text x="150" y="266" font-family="Inter" font-weight="700" font-size="22" fill="#6FD0FF">Proxmox cluster  ·  openeverest-demo  (cert-manager · OTel Operator · Dynatrace Operator pre-installed)</text>
+
+  <!-- OpenEverest control plane -->
+  <g font-family="Inter">
+    <rect x="150" y="300" width="360" height="150" rx="16" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+    <text x="330" y="342" font-weight="900" font-size="27" fill="#4FB8FF" text-anchor="middle">OpenEverest</text>
+    <text x="330" y="372" font-weight="400" font-size="18" fill="#B9CCE6" text-anchor="middle">UI · REST API · everest-operator</text>
+    <text x="330" y="412" font-weight="700" font-size="19" fill="#F4F8FF" text-anchor="middle">deployed LIVE on stream</text>
+    <text x="330" y="436" font-weight="400" font-size="16" fill="#8FA4C7" text-anchor="middle">ns: everest-system</text>
+  </g>
+
+  <!-- provisions arrow -->
+  <path d="M510,375 H640" fill="none" stroke="#4FB8FF" stroke-width="3.5" marker-end="url(#a)"/>
+  <text x="575" y="362" font-family="Inter" font-weight="700" font-size="18" fill="#4FB8FF" text-anchor="middle">provisions</text>
+
+  <!-- HA Postgres (Everest) -->
+  <g font-family="Inter">
+    <rect x="650" y="292" width="470" height="240" rx="18" fill="#0C1424" stroke="#2466C7" stroke-width="2.5"/>
+    <text x="885" y="330" font-weight="800" font-size="24" fill="#F4F8FF" text-anchor="middle">HA PostgreSQL  ·  Everest-provisioned</text>
+    <text x="885" y="356" font-weight="400" font-size="17" fill="#8FA4C7" text-anchor="middle">DatabaseCluster → astronomy_db  ·  StorageClass: local-path</text>
+    <!-- pgbouncer -->
+    <rect x="678" y="378" width="180" height="60" rx="12" fill="#132A4D" stroke="#2A86E8" stroke-width="2"/>
+    <text x="768" y="406" font-weight="700" font-size="19" fill="#F4F8FF" text-anchor="middle">PgBouncer</text>
+    <text x="768" y="428" font-weight="400" font-size="15" fill="#8FA4C7" text-anchor="middle">proxy svc :5432</text>
+    <!-- primary/replica -->
+    <rect x="878" y="378" width="100" height="60" rx="12" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="928" y="406" font-weight="700" font-size="17" fill="#F4F8FF" text-anchor="middle">primary</text>
+    <text x="928" y="426" font-weight="400" font-size="14" fill="#8FA4C7" text-anchor="middle">Patroni</text>
+    <rect x="988" y="378" width="104" height="60" rx="12" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="1040" y="406" font-weight="700" font-size="17" fill="#F4F8FF" text-anchor="middle">replica</text>
+    <text x="1040" y="426" font-weight="400" font-size="14" fill="#8FA4C7" text-anchor="middle">failover</text>
+    <!-- extensions -->
+    <rect x="678" y="454" width="414" height="56" rx="12" fill="#121826" stroke="#3A2A1A" stroke-width="2"/>
+    <text x="885" y="480" font-weight="700" font-size="18" fill="#F5A623" text-anchor="middle">pg_stat_statements + SQLCommenter</text>
+    <text x="885" y="500" font-weight="400" font-size="15" fill="#8FA4C7" text-anchor="middle">per-query DB spans — the observability hook</text>
+  </g>
+
+  <!-- pgBackRest / S3 -->
+  <g font-family="Inter">
+    <rect x="650" y="560" width="220" height="76" rx="14" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="760" y="592" font-weight="700" font-size="19" fill="#F4F8FF" text-anchor="middle">pgBackRest</text>
+    <text x="760" y="616" font-weight="400" font-size="15" fill="#8FA4C7" text-anchor="middle">backup · PITR → S3</text>
+    <path d="M885,532 V560" fill="none" stroke="#2466C7" stroke-width="2.5" marker-end="url(#a)"/>
+  </g>
+
+  <!-- OTel demo consumers -->
+  <g font-family="Inter">
+    <rect x="150" y="560" width="440" height="300" rx="18" fill="#0C1424" stroke="#22314C" stroke-width="2.5"/>
+    <text x="176" y="598" font-weight="800" font-size="23" fill="#6FD0FF">OpenTelemetry Demo (astroshop)</text>
+    <rect x="176" y="620" width="388" height="88" rx="12" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="196" y="656" font-weight="800" font-size="22" fill="#F4F8FF">product-catalog</text>
+    <text x="196" y="686" font-weight="400" font-size="17" fill="#8FA4C7">Go · libpq URL · SQLCommenter injects trace ctx</text>
+    <rect x="176" y="720" width="388" height="88" rx="12" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="196" y="756" font-weight="800" font-size="22" fill="#F4F8FF">accounting</text>
+    <text x="196" y="786" font-weight="400" font-size="17" fill="#8FA4C7">.NET · Npgsql key-value dialect</text>
+    <text x="176" y="840" font-weight="600" font-size="16" fill="#F5A623">bundled astronomy-db: enabled=false</text>
+  </g>
+
+  <!-- data-plane arrows apps -> pgbouncer left edge -->
+  <path d="M564,656 C610,610 620,470 674,412" fill="none" stroke="#F5A623" stroke-width="3" stroke-dasharray="2 8" marker-end="url(#aData)"/>
+  <path d="M564,756 C630,700 632,468 674,420" fill="none" stroke="#F5A623" stroke-width="3" stroke-dasharray="2 8" marker-end="url(#aData)"/>
+  <text x="576" y="560" font-family="Inter" font-weight="700" font-size="17" fill="#F5A623" transform="rotate(-64 576 560)">SQL over :5432</text>
+
+  <!-- Observability stack -->
+  <g font-family="Inter">
+    <rect x="1180" y="300" width="590" height="536" rx="18" fill="#0C1424" stroke="#22314C" stroke-width="2.5"/>
+    <text x="1206" y="340" font-weight="800" font-size="23" fill="#7FD98A">OBSERVABILITY</text>
+
+    <rect x="1206" y="360" width="538" height="96" rx="12" fill="#0E2417" stroke="#2E7D46" stroke-width="2"/>
+    <text x="1230" y="398" font-weight="800" font-size="22" fill="#F4F8FF">OpenTelemetry Operator</text>
+    <text x="1230" y="428" font-weight="400" font-size="17" fill="#9BD3A6">auto-instruments apps → OTel Collector</text>
+
+    <rect x="1206" y="470" width="538" height="96" rx="12" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <text x="1230" y="508" font-weight="800" font-size="22" fill="#F4F8FF">OTel Collector</text>
+    <text x="1230" y="538" font-weight="400" font-size="17" fill="#8FA4C7">traces · metrics · logs — OTLP pipeline</text>
+
+    <rect x="1206" y="580" width="538" height="110" rx="12" fill="#0E2417" stroke="#2E7D46" stroke-width="2"/>
+    <text x="1230" y="620" font-weight="800" font-size="22" fill="#F4F8FF">Dynatrace Operator</text>
+    <text x="1230" y="650" font-weight="400" font-size="17" fill="#9BD3A6">DynaKube → OneAgent / ActiveGate ingest</text>
+    <text x="1230" y="676" font-weight="400" font-size="16" fill="#8FA4C7">product-catalog → Everest Postgres, traced end-to-end</text>
+
+    <rect x="1206" y="704" width="538" height="108" rx="12" fill="#132A4D" stroke="#2A86E8" stroke-width="2"/>
+    <text x="1475" y="744" font-weight="900" font-size="24" fill="#6FD0FF" text-anchor="middle">Dynatrace</text>
+    <text x="1475" y="778" font-weight="400" font-size="18" fill="#B9CCE6" text-anchor="middle">new Postgres pods appear as monitored entities;</text>
+    <text x="1475" y="800" font-weight="700" font-size="18" fill="#F5A623" text-anchor="middle">per-query DB spans light up — the money shot</text>
+  </g>
+
+  <!-- telemetry arrow: apps (auto-instrumented) -> OTel Operator, routed below the PG box -->
+  <path d="M590,700 C820,742 1000,560 1130,432 C1150,414 1164,410 1180,408" fill="none" stroke="#7FD98A" stroke-width="3" stroke-dasharray="2 9" marker-end="url(#aTel)"/>
+  <text x="905" y="700" font-family="Inter" font-weight="700" font-size="17" fill="#7FD98A">telemetry (OTLP)</text>
+
+  <!-- legend -->
+  <g font-family="Inter" font-size="17">
+    <rect x="150" y="880" width="1080" height="34" rx="8" fill="#0A1120" opacity="0"/>
+    <line x1="150" y1="900" x2="192" y2="900" stroke="#4FB8FF" stroke-width="3.5"/><text x="200" y="906" fill="#8FA4C7">control / provisioning</text>
+    <line x1="430" y1="900" x2="472" y2="900" stroke="#F5A623" stroke-width="3" stroke-dasharray="2 8"/><text x="480" y="906" fill="#8FA4C7">data plane (SQL)</text>
+    <line x1="690" y1="900" x2="732" y2="900" stroke="#7FD98A" stroke-width="3" stroke-dasharray="2 9"/><text x="740" y="906" fill="#8FA4C7">telemetry (traces/metrics/logs)</text>
+  </g>
+
+  <rect x="0" y="1012" width="1920" height="4" fill="#1C2942"/>
+  <text x="140" y="1056" font-family="Inter" font-weight="600" font-size="24" fill="#5B6B83">ChatLoopBackOff × OpenEverest  ·  Blocks 5–6 — provision · wire · observe</text>
+  <text x="1780" y="1056" font-family="Inter" font-weight="600" font-size="24" fill="#5B6B83" text-anchor="end">OTel Demo · Everest PG · Dynatrace</text>
+</svg>

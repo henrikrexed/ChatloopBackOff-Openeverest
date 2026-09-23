@@ -2,8 +2,8 @@
 
 > **Status:** technical steps validated end-to-end against a real cluster on
 > 2026-09-23 (everestctl v1.16.2 · Percona PG operator v3.0.0 · PostgreSQL 17.10 ·
-> otel-demo chart 0.40.10 / app 2.2.0). Prose/narrative polish is owned by the
-> Content Writer — see the section markers below.
+> otel-demo chart 0.40.10 / app 2.2.0). Do not change any command or version without
+> re-validating against a real cluster.
 
 ## What you'll build
 
@@ -22,7 +22,30 @@ The payoff: the storefront keeps serving products, but the database is now a
 declaratively-managed, observable Everest resource — and its query stats light up
 through `pg_stat_statements`.
 
-<!-- Content Writer: expand "What you'll build" into a narrative intro + a diagram callout. -->
+Think of it as a controlled organ transplant. The OTel Demo arrives with its own
+bundled PostgreSQL — fine for a laptop, but unmanaged, unbacked-up, and invisible past
+the pod boundary. Rather than redeploy the whole demo against a different database, you
+provision a *better* database next to it and then re-point just the two services that
+actually use it — **product-catalog** (Go) and **accounting** (.NET) — at the new
+endpoint. Nothing about the application's image, code, or business logic changes; the
+only thing that moves is a connection string. That's the whole trick, and it's why this
+pattern generalizes far beyond a demo: if you can change where an app connects, you can
+migrate its state without touching the app.
+
+The six steps below build up to exactly this. You start from a working baseline (the
+demo on its bundled DB), stand up the Everest control plane, provision and seed a real
+PostgreSQL cluster, perform the swap, and finally observe the result — first confirming
+the storefront still works, then watching the telemetry prove *where* its queries now
+land.
+
+![Observability architecture — Everest provisions the PostgreSQL cluster; the OTel Demo's product-catalog and accounting services consume it through PgBouncer; the OTel Operator + Collector and the Dynatrace Operator carry the telemetry out to Jaeger/Grafana and Dynatrace.](assets/observability-architecture.png)
+
+> **Diagram:** the end state. Everest (top) owns the `demo-pg` PostgreSQL cluster in
+> `everest-dbs`; the OTel Demo (bottom) reaches it through the PgBouncer LoadBalancer;
+> and everything is instrumented, so the migration is legible in both Jaeger/Grafana and
+> Dynatrace. Keep this picture in mind as you work through the steps — each one lights up
+> one more edge of it. A step-by-step version of the flow is in
+> [`assets/demo-flow.png`](assets/demo-flow.png).
 
 ## Prerequisites
 
@@ -138,12 +161,38 @@ kubectl -n otel-demo get pods | grep -E 'product-catalog|accounting|postgresql'
 
 ## Step 6 — Observe
 
-- **Jaeger / Grafana** (bundled): traces from product-catalog and accounting now
-  show calls to the Everest PostgreSQL; `pg_stat_statements` surfaces query stats.
-- **Dynatrace** (optional): install the operator, create the token Secret, and
-  apply a DynaKube — see [`dynakube.yaml.example`](../manifests/dynatrace/dynakube.yaml.example).
+This is the payoff. Up to now you've *asserted* that the demo moved onto Everest; now
+you'll *see* it. Because product-catalog and accounting are OpenTelemetry-instrumented,
+their database calls carry spans — so the migration shows up as a change in where those
+spans point, not as a leap of faith.
 
-<!-- Content Writer: add screenshots of Jaeger service map + the Everest UI DB view. -->
+- **Jaeger / Grafana** (bundled): open a trace that touches product-catalog or
+  accounting and follow it to the PostgreSQL span. Before the swap it resolved to the
+  in-cluster `postgresql` service; after the swap it resolves to the Everest PgBouncer
+  endpoint. In parallel, `pg_stat_statements` on the managed cluster now accumulates
+  per-query stats — the same statements you see in the traces, counted at the database.
+- **Dynatrace** (optional): install the operator, create the token Secret, and apply a
+  DynaKube — see [`dynakube.yaml.example`](../manifests/dynatrace/dynakube.yaml.example).
+  Dynatrace's Smartscape/service view gives you the same story from the other side:
+  the demo services now depend on an external PostgreSQL host, and its query load is
+  attributed back to the calling services.
+
+Two screenshots make this land — capture them live during the walkthrough:
+
+![Jaeger service map / trace waterfall showing a product-catalog request whose PostgreSQL span now targets the Everest PgBouncer endpoint.](images/jaeger-service-map.png)
+
+> **Screenshot — Jaeger:** a product-catalog (or accounting) trace expanded to the
+> database span. The point to highlight on screen: the span's peer/host is the Everest
+> PgBouncer LoadBalancer IP on port `5432`, database `otel` — proof the query left the
+> bundled DB. _(Capture during the stream; drop the PNG at `docs/images/jaeger-service-map.png`.)_
+
+![OpenEverest UI database view showing the demo-pg PostgreSQL 17.10 cluster in state ready, with its PgBouncer endpoint and connection details.](images/everest-ui-db-view.png)
+
+> **Screenshot — Everest UI:** the `demo-pg` cluster detail page (`everestctl` UI,
+> port-forwarded in Step 2), showing engine **PostgreSQL 17.10**, state **ready**, and
+> the exposed connection endpoint. This is the "managed database" half of the story —
+> the same database the Jaeger span is now hitting. _(Capture during the stream; drop the
+> PNG at `docs/images/everest-ui-db-view.png`.)_
 
 ## Teardown
 

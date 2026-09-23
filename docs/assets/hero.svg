@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05070D"/>
+      <stop offset="1" stop-color="#0B0F1A"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4FB8FF"/>
+      <stop offset="45%" stop-color="#2A86E8"/>
+      <stop offset="70%" stop-color="#2466C7"/>
+      <stop offset="100%" stop-color="#0E2A6A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.32" r="0.5">
+      <stop offset="0" stop-color="#2A86E8" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2A86E8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+
+  <!-- faint dot grid -->
+  <g fill="#6FD0FF" opacity="0.06">
+    <!-- generated grid of dots -->
+    <g>
+      <circle cx="1240" cy="200" r="4"/><circle cx="1340" cy="200" r="4"/><circle cx="1440" cy="200" r="4"/><circle cx="1540" cy="200" r="4"/><circle cx="1640" cy="200" r="4"/><circle cx="1740" cy="200" r="4"/>
+      <circle cx="1240" cy="300" r="4"/><circle cx="1340" cy="300" r="4"/><circle cx="1440" cy="300" r="4"/><circle cx="1540" cy="300" r="4"/><circle cx="1640" cy="300" r="4"/><circle cx="1740" cy="300" r="4"/>
+      <circle cx="1240" cy="400" r="4"/><circle cx="1340" cy="400" r="4"/><circle cx="1440" cy="400" r="4"/><circle cx="1540" cy="400" r="4"/><circle cx="1640" cy="400" r="4"/><circle cx="1740" cy="400" r="4"/>
+      <circle cx="1240" cy="500" r="4"/><circle cx="1340" cy="500" r="4"/><circle cx="1440" cy="500" r="4"/><circle cx="1540" cy="500" r="4"/><circle cx="1640" cy="500" r="4"/><circle cx="1740" cy="500" r="4"/>
+    </g>
+  </g>
+
+  <!-- stacked "database disk" motif, right -->
+  <g transform="translate(1500,540)" opacity="0.9">
+    <g fill="none" stroke="#2A86E8" stroke-width="6" opacity="0.55">
+      <ellipse cx="0" cy="-96" rx="150" ry="46"/>
+      <path d="M-150,-96 v70 a150,46 0 0 0 300,0 v-70"/>
+      <path d="M-150,-26 v70 a150,46 0 0 0 300,0 v-70"/>
+      <path d="M-150,44 v70 a150,46 0 0 0 300,0 v-70"/>
+    </g>
+    <ellipse cx="0" cy="-96" rx="150" ry="46" fill="none" stroke="#4FB8FF" stroke-width="6"/>
+    <circle cx="96" cy="150" r="30" fill="#0B0F1A" stroke="#6FD0FF" stroke-width="5"/>
+    <path d="M84,150 l9,9 l16,-20" fill="none" stroke="#6FD0FF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- eyebrow -->
+  <text x="140" y="292" font-family="Inter" font-weight="700" font-size="32" letter-spacing="9" fill="#4FB8FF">CHATLOOPBACKOFF  ·  CNCF LIVESTREAM  ·  60 MIN</text>
+
+  <!-- title -->
+  <text x="136" y="452" font-family="Inter" font-weight="900" font-size="132" fill="#F4F8FF">OpenEverest</text>
+  <text x="140" y="590" font-family="Inter" font-weight="700" font-size="60" fill="#F4F8FF">An <tspan fill="#4FB8FF">RDS button</tspan> for your own Kubernetes.</text>
+
+  <!-- accent rule -->
+  <rect x="140" y="648" width="680" height="9" rx="4.5" fill="url(#brand)"/>
+
+  <!-- subline -->
+  <text x="140" y="726" font-family="Inter" font-weight="400" font-size="34" fill="#8FA4C7">Self-service HA PostgreSQL / MySQL / MongoDB — provisioned live, wired to the OTel Demo.</text>
+
+  <!-- guest chip -->
+  <g transform="translate(140,800)">
+    <rect x="0" y="0" width="560" height="72" rx="36" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+    <circle cx="40" cy="36" r="10" fill="#F5A623"/>
+    <text x="70" y="46" font-family="Inter" font-weight="600" font-size="28" fill="#F4F8FF">Live with an OpenEverest maintainer</text>
+  </g>
+
+  <!-- footer -->
+  <rect x="0" y="1012" width="1920" height="4" fill="#1C2942"/>
+  <text x="140" y="1056" font-family="Inter" font-weight="600" font-size="26" fill="#5B6B83">IsItObservable  ·  OpenEverest · CNCF Sandbox · OpenTelemetry · Dynatrace</text>
+</svg>

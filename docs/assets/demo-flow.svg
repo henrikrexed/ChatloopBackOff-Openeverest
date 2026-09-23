@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05070D"/><stop offset="1" stop-color="#0B0F1A"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4FB8FF"/><stop offset="45%" stop-color="#2A86E8"/><stop offset="70%" stop-color="#2466C7"/><stop offset="100%" stop-color="#0E2A6A"/>
+    </linearGradient>
+    <marker id="a" markerWidth="13" markerHeight="13" refX="8" refY="6" orient="auto"><path d="M1,1 L11,6 L1,11 z" fill="#4FB8FF"/></marker>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <text x="140" y="118" font-family="Inter" font-weight="700" font-size="30" letter-spacing="8" fill="#4FB8FF">THE DEMO FLOW  ·  FIVE STEPS, LIVE</text>
+  <text x="138" y="188" font-family="Inter" font-weight="900" font-size="60" fill="#F4F8FF">From empty cluster to observable, Everest-backed app</text>
+  <rect x="140" y="212" width="420" height="7" rx="3.5" fill="url(#brand)"/>
+
+  <!-- step cards -->
+  <g font-family="Inter">
+    <!-- 1 -->
+    <g transform="translate(140,280)">
+      <rect x="0" y="0" width="316" height="330" rx="18" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+      <rect x="0" y="0" width="316" height="10" rx="5" fill="url(#brand)"/>
+      <circle cx="52" cy="70" r="30" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+      <text x="52" y="80" font-weight="900" font-size="30" fill="#4FB8FF" text-anchor="middle">1</text>
+      <text x="24" y="138" font-weight="800" font-size="27" fill="#F4F8FF">Install</text>
+      <text x="24" y="170" font-weight="400" font-size="19" fill="#8FA4C7">OpenEverest — live</text>
+      <text x="24" y="222" font-family="DejaVu Sans Mono" font-size="15" fill="#DCEEFF">helm install</text>
+      <text x="24" y="246" font-family="DejaVu Sans Mono" font-size="15" fill="#DCEEFF">  everest-core</text>
+      <text x="24" y="270" font-family="DejaVu Sans Mono" font-size="15" fill="#DCEEFF">  -n everest-system</text>
+      <text x="24" y="306" font-weight="400" font-size="16" fill="#8FA4C7">no cert-manager needed</text>
+    </g>
+    <path d="M462,445 H520" fill="none" stroke="#4FB8FF" stroke-width="3.5" marker-end="url(#a)"/>
+
+    <!-- 2 -->
+    <g transform="translate(528,280)">
+      <rect x="0" y="0" width="316" height="330" rx="18" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+      <rect x="0" y="0" width="316" height="10" rx="5" fill="url(#brand)"/>
+      <circle cx="52" cy="70" r="30" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+      <text x="52" y="80" font-weight="900" font-size="30" fill="#4FB8FF" text-anchor="middle">2</text>
+      <text x="24" y="138" font-weight="800" font-size="27" fill="#F4F8FF">Provision</text>
+      <text x="24" y="170" font-weight="400" font-size="19" fill="#8FA4C7">HA PostgreSQL</text>
+      <text x="24" y="216" font-weight="400" font-size="18" fill="#B9CCE6">+ Create Database → PG</text>
+      <text x="24" y="248" font-weight="400" font-size="18" fill="#B9CCE6">DatabaseCluster CR</text>
+      <text x="24" y="280" font-weight="400" font-size="18" fill="#B9CCE6">Patroni · PgBouncer up</text>
+      <text x="24" y="312" font-weight="600" font-size="16" fill="#F5A623">watch pods go Ready</text>
+    </g>
+    <path d="M850,445 H908" fill="none" stroke="#4FB8FF" stroke-width="3.5" marker-end="url(#a)"/>
+
+    <!-- 3 -->
+    <g transform="translate(916,280)">
+      <rect x="0" y="0" width="316" height="330" rx="18" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+      <rect x="0" y="0" width="316" height="10" rx="5" fill="url(#brand)"/>
+      <circle cx="52" cy="70" r="30" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+      <text x="52" y="80" font-weight="900" font-size="30" fill="#4FB8FF" text-anchor="middle">3</text>
+      <text x="24" y="138" font-weight="800" font-size="27" fill="#F4F8FF">Seed</text>
+      <text x="24" y="170" font-weight="400" font-size="19" fill="#8FA4C7">the schema</text>
+      <text x="24" y="220" font-family="DejaVu Sans Mono" font-size="14" fill="#DCEEFF">psql "$EVEREST_URI"</text>
+      <text x="24" y="244" font-family="DejaVu Sans Mono" font-size="14" fill="#DCEEFF">  -f init.sql</text>
+      <text x="24" y="284" font-weight="400" font-size="17" fill="#B9CCE6">astronomy_db, users,</text>
+      <text x="24" y="308" font-weight="400" font-size="17" fill="#B9CCE6">catalog + accounting</text>
+    </g>
+    <path d="M1238,445 H1296" fill="none" stroke="#4FB8FF" stroke-width="3.5" marker-end="url(#a)"/>
+
+    <!-- 4 -->
+    <g transform="translate(1304,280)">
+      <rect x="0" y="0" width="316" height="330" rx="18" fill="#121826" stroke="#1C2942" stroke-width="2"/>
+      <rect x="0" y="0" width="316" height="10" rx="5" fill="url(#brand)"/>
+      <circle cx="52" cy="70" r="30" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+      <text x="52" y="80" font-weight="900" font-size="30" fill="#4FB8FF" text-anchor="middle">4</text>
+      <text x="24" y="138" font-weight="800" font-size="27" fill="#F4F8FF">Repoint</text>
+      <text x="24" y="170" font-weight="400" font-size="19" fill="#8FA4C7">the OTel Demo</text>
+      <text x="24" y="216" font-weight="400" font-size="17" fill="#B9CCE6">astronomy-db: disabled</text>
+      <text x="24" y="248" font-weight="400" font-size="17" fill="#B9CCE6">rewrite BOTH strings:</text>
+      <text x="24" y="278" font-weight="600" font-size="16" fill="#F5A623">libpq URL (Go)</text>
+      <text x="24" y="304" font-weight="600" font-size="16" fill="#F5A623">Npgsql key-value (.NET)</text>
+    </g>
+  </g>
+
+  <!-- step 5 wide -->
+  <path d="M1462,614 V664" fill="none" stroke="#4FB8FF" stroke-width="3.5" marker-end="url(#a)"/>
+  <g font-family="Inter" transform="translate(140,676)">
+    <rect x="0" y="0" width="1480" height="230" rx="18" fill="#0D1B33" stroke="#2A86E8" stroke-width="2.5"/>
+    <circle cx="60" cy="66" r="32" fill="#0C1424" stroke="#4FB8FF" stroke-width="2.5"/>
+    <text x="60" y="77" font-weight="900" font-size="32" fill="#4FB8FF" text-anchor="middle">5</text>
+    <text x="118" y="66" font-weight="800" font-size="32" fill="#F4F8FF">Observe — the payoff</text>
+    <text x="118" y="104" font-weight="400" font-size="21" fill="#B9CCE6">Storefront loads products from Everest PG · place an order (accounting writes)</text>
+    <text x="118" y="140" font-weight="400" font-size="21" fill="#B9CCE6">Traces in Dynatrace / OTel show product-catalog → <tspan fill="#4FB8FF" font-weight="700">Everest Postgres</tspan>, with SQLCommenter + pg_stat_statements</text>
+    <rect x="118" y="164" width="1300" height="46" rx="10" fill="#0C1424" stroke="#3A2A1A" stroke-width="1.5"/>
+    <text x="140" y="194" font-weight="700" font-size="22" fill="#F5A623">"The database moved. The observability didn't miss a beat."</text>
+  </g>
+
+  <rect x="0" y="1012" width="1920" height="4" fill="#1C2942"/>
+  <text x="140" y="1056" font-family="Inter" font-weight="600" font-size="24" fill="#5B6B83">ChatLoopBackOff × OpenEverest  ·  Demo A (steps 1–2) + Demo B (steps 3–5)</text>
+  <text x="1780" y="1056" font-family="Inter" font-weight="600" font-size="24" fill="#5B6B83" text-anchor="end">fallback clips cover each step</text>
+</svg>
