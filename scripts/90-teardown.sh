@@ -13,10 +13,13 @@ helm upgrade otel-demo open-telemetry/opentelemetry-demo -n "${DEMO_NS}" \
 echo ">> Deleting the DatabaseCluster..."
 kubectl -n "${DB_NS}" delete -f "${HERE}/manifests/everest/database-cluster.yaml" --ignore-not-found
 
-echo ">> Uninstalling Everest..."
-everestctl uninstall -y -f || true
+echo ">> Uninstalling Everest via Helm (installed via Helm → uninstall via Helm)..."
+# Uninstall the db-namespace release first (operator lives here), then the core release.
+helm uninstall everest -n "${DB_NS}" || true
+helm uninstall everest -n everest-system || true
+kubectl delete namespace "${DB_NS}" everest-system --ignore-not-found || true
 
-# GOTCHA: `everestctl uninstall` leaves the Percona PG operator CRDs behind.
+# GOTCHA: the Percona PG operator CRDs are cluster-scoped and survive `helm uninstall`.
 echo ">> Removing residual Percona PG CRDs..."
 kubectl get crd -o name | grep pgv2.percona.com | xargs -r kubectl delete || true
 

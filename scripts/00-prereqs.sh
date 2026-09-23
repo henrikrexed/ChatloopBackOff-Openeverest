@@ -1,31 +1,34 @@
 #!/usr/bin/env bash
 # Prereqs for the OpenEverest × OTel Demo tutorial.
-# Installs everestctl and adds the OpenTelemetry Helm repo. Idempotent.
+# Adds the OpenEverest + OpenTelemetry Helm repos (OpenEverest is installed via its
+# Helm chart in scripts/10-install-everest.sh). Idempotent.
 #
-# Assumes: a running Kubernetes cluster, kubectl + helm on PATH, a default
+# Assumes: a running Kubernetes cluster, kubectl + helm + yq on PATH, a default
 # StorageClass backed by local disk (network FS causes PG fsync stalls), and
 # a LoadBalancer implementation (MetalLB, cloud LB, etc.).
+#
+# NOTE: `everestctl` is NO LONGER required to install Everest (Helm handles that).
+# It remains a useful OPTIONAL companion CLI for account management, e.g.
+# `everestctl accounts set-password`. Install it from
+# https://github.com/openeverest/openeverest/releases if you want it.
 set -euo pipefail
-
-EVERESTCTL_VERSION="${EVERESTCTL_VERSION:-v1.16.2}"
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"; case "$ARCH" in x86_64) ARCH=amd64;; aarch64|arm64) ARCH=arm64;; esac
 
 echo ">> Checking cluster access..."
 kubectl version -o json >/dev/null
 
-echo ">> Installing everestctl ${EVERESTCTL_VERSION} (${OS}/${ARCH})..."
-if ! command -v everestctl >/dev/null 2>&1; then
-  curl -fsSL -o /tmp/everestctl \
-    "https://github.com/openeverest/openeverest/releases/download/${EVERESTCTL_VERSION}/everestctl-${OS}-${ARCH}"
-  chmod +x /tmp/everestctl
-  sudo mv /tmp/everestctl /usr/local/bin/everestctl
-fi
-everestctl version || true
+echo ">> Checking required tools (kubectl, helm, yq)..."
+for t in kubectl helm yq; do
+  command -v "$t" >/dev/null 2>&1 || { echo "!! missing required tool: $t" >&2; exit 1; }
+done
+
+echo ">> Adding the OpenEverest Helm repo..."
+helm repo add openeverest https://openeverest.github.io/helm-charts/ >/dev/null 2>&1 || true
 
 echo ">> Adding the OpenTelemetry Helm repo..."
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts >/dev/null 2>&1 || true
-helm repo update open-telemetry
+
+echo ">> Updating Helm repos..."
+helm repo update openeverest open-telemetry
 
 echo ">> Default StorageClass:"
 kubectl get storageclass
