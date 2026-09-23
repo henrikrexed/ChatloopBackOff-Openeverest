@@ -95,13 +95,16 @@ This runs:
 ```sh
 # 1) Everest control plane (fixed namespace `everest-system` on 1.16.2)
 helm install everest openeverest/openeverest \
-  --namespace everest-system --create-namespace
+  --namespace everest-system --create-namespace --version 1.16.2
 
-# 2) A PostgreSQL-only database namespace (pxc=MySQL, psmdb=MongoDB → both disabled)
+# 2) A PostgreSQL-only database namespace. The operator toggles are TOP-LEVEL keys
+#    (pxc=MySQL, psmdb=MongoDB → both disabled; postgresql defaults to true).
+#    NOTE: they are NOT nested under `dbNamespace.*` — `--set dbNamespace.pxc=false`
+#    is silently ignored and installs all three operators.
 helm install everest openeverest/everest-db-namespace \
-  --namespace everest-dbs --create-namespace \
-  --set dbNamespace.pxc=false \
-  --set dbNamespace.psmdb=false
+  --namespace everest-dbs --create-namespace --version 1.16.2 \
+  --set pxc=false \
+  --set psmdb=false
 
 # 3) Initial admin password hash (rotate before any public use):
 kubectl get secret everest-accounts -n everest-system \
@@ -228,6 +231,7 @@ and removes the residual `*.pgv2.percona.com` CRDs that survive the Helm uninsta
 ## Troubleshooting / gotchas (all hit during the real dry-run)
 
 1. The `openeverest/openeverest` core chart doesn't create the DB namespace/operator → install the separate `openeverest/everest-db-namespace` chart.
+   - Its operator toggles are **top-level** keys (`pxc` / `psmdb` / `postgresql`), *not* `dbNamespace.*`. `--set dbNamespace.pxc=false` is silently ignored and installs all three operators — use `--set pxc=false --set psmdb=false`.
 2. PostgreSQL 17.4 unavailable on operator v3.0.0 → pin 17.10.
 3. `expose.type: external` is deprecated → use `LoadBalancer`.
 4. The pguser Secret has **no `uri` key** → build the conn string from `user`/`password`.

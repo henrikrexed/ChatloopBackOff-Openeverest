@@ -14,18 +14,25 @@
 set -euo pipefail
 
 DB_NS="${DB_NS:-everest-dbs}"
+CHART_VERSION="${CHART_VERSION:-1.16.2}"
 
 echo ">> (1/3) Installing Everest core via Helm (namespace: everest-system)..."
 helm install everest openeverest/openeverest \
-  --namespace everest-system --create-namespace
+  --namespace everest-system --create-namespace \
+  --version "${CHART_VERSION}"
 
 echo ">> (2/3) Deploying DB namespace '${DB_NS}' with the PostgreSQL operator only..."
-# pxc = Percona XtraDB (MySQL), psmdb = Percona Server for MongoDB — both disabled,
-# leaving PostgreSQL as the only enabled operator in this namespace.
+# The everest-db-namespace chart's operator toggles are TOP-LEVEL keys (verified
+# against chart 1.16.2 `helm show values`): pxc = Percona XtraDB (MySQL),
+# psmdb = Percona Server for MongoDB, postgresql (default true). Disabling pxc +
+# psmdb leaves PostgreSQL as the only operator installed in this namespace.
+#   NOTE: these are NOT nested under `dbNamespace.*` — a `--set dbNamespace.pxc=false`
+#   is silently ignored and would install ALL THREE operators.
 helm install everest openeverest/everest-db-namespace \
   --namespace "${DB_NS}" --create-namespace \
-  --set dbNamespace.pxc=false \
-  --set dbNamespace.psmdb=false
+  --version "${CHART_VERSION}" \
+  --set pxc=false \
+  --set psmdb=false
 
 echo ">> (3/3) Initial admin credentials (rotate before any public/live use):"
 echo ">>   username: admin"
