@@ -1,0 +1,31 @@
+# OTel Demo → Everest PostgreSQL SWAP overlay.
+#
+# Disables the bundled Postgres and repoints product-catalog (Go / libpq URL) and
+# accounting (.NET / Npgsql key-value) at the Everest-provisioned database.
+#
+# Apply as a Helm upgrade overlay ON TOP of your running demo values:
+#
+#   helm upgrade otel-demo open-telemetry/opentelemetry-demo -n otel-demo \
+#     --reuse-values -f manifests/everest/otel-demo-everest-values.yaml
+#   kubectl -n otel-demo rollout status deploy/product-catalog deploy/accounting
+#
+# Replace <EVEREST_LB_IP> with the PgBouncer LoadBalancer address:
+#   kubectl -n everest-dbs get svc -l postgres-operator.crunchydata.com/role=pgbouncer \
+#     -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}'
+#
+# NOTES (validated 2026-09-23 against otel-demo app 2.2.0):
+#   * The bundled DB component is `postgresql` — NOT `astronomy-db`. Disabling
+#     `astronomy-db` is a no-op on this chart, so the old Postgres would keep running.
+#   * The demo uses database `otel`, user `otelu` / password `otelp` (from init.sql).
+#   * sslmode/SSL Mode=require because the operator serves a self-signed cert.
+components:
+  postgresql:
+    enabled: false            # kill the bundled Postgres — Everest is the DB now
+  product-catalog:
+    env:
+      - name: DB_CONNECTION_STRING
+        value: "postgres://otelu:otelp@<EVEREST_LB_IP>:5432/otel?sslmode=require"
+  accounting:
+    env:
+      - name: DB_CONNECTION_STRING
+        value: "Host=<EVEREST_LB_IP>;Port=5432;Username=otelu;Password=otelp;Database=otel;SSL Mode=Require;Trust Server Certificate=true"

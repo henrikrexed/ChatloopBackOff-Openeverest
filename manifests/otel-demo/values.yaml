@@ -1,0 +1,27 @@
+# Helm values — open-telemetry/opentelemetry-demo, BASELINE (pre-swap) state.
+# Pinned to chart 0.40.10 / app 2.2.0.
+#
+#   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+#   helm repo update
+#   helm upgrade --install otel-demo open-telemetry/opentelemetry-demo \
+#     -n otel-demo --create-namespace --version 0.40.10 -f manifests/otel-demo/values.yaml
+#
+# The bundled Postgres (`postgresql`) is ENABLED here; the live Everest swap
+# overlay (manifests/everest/otel-demo-everest-values.yaml) disables it.
+# frontend-proxy is a LoadBalancer so the storefront gets an external IP.
+components:
+  postgresql:
+    enabled: true
+opentelemetry-collector:
+  enabled: true
+jaeger:
+  enabled: true
+grafana:
+  enabled: true
+prometheus:
+  enabled: true
+opensearch:
+  enabled: true
+frontend-proxy:
+  service:
+    type: LoadBalancer

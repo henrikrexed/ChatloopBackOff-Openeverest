@@ -1,0 +1,67 @@
+# Seed Job — creates the `otel` database + loads the OTel Demo 2.2.0 schema/data
+# into the Everest-provisioned PostgreSQL. Everest hands you an EMPTY database,
+# so without this the storefront is empty and accounting fails on insert.
+#
+# The Everest/Percona pguser Secret has NO `uri` key. Its keys are:
+#   host / password / pgbouncer-host / pgbouncer-port / port / user / verifier
+# so we build the connection from individual fields, NOT from a connection URI.
+# We connect DIRECTLY to the primary (demo-pg-primary.everest-dbs.svc) rather than
+# through PgBouncer, because CREATE DATABASE cannot run in a pooled session.
+#
+# Prereq: `demo-pg` DatabaseCluster is `ready`. The Secret name below matches the
+# cluster name — confirm it: kubectl -n everest-dbs get secret | grep demo-pg
+#
+#   kubectl apply -f manifests/everest/seed-job.yaml
+#   kubectl -n everest-dbs logs job/otel-demo-pg-seed -f     # → "Seed complete."
+#
+# The demo's init.sql itself runs `CREATE USER otelu ...` and builds the
+# accounting/reviews/catalog schemas, so we only create the database + extension.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: otel-demo-pg-seed
+  namespace: everest-dbs
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: postgres:17
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              echo "Fetching demo init.sql (pinned to app 2.2.0)..."
+              curl -fsSL -o /tmp/init.sql \
+                https://raw.githubusercontent.com/open-telemetry/opentelemetry-demo/2.2.0/src/postgresql/init.sql
+              export PGSSLMODE=require
+              echo "Creating database 'otel' (idempotent)..."
+              psql -h "$PGHOST" -U "$PGUSER" -d postgres \
+                -tc "SELECT 1 FROM pg_database WHERE datname='otel'" | grep -q 1 \
+                || psql -h "$PGHOST" -U "$PGUSER" -d postgres -c "CREATE DATABASE otel"
+              echo "Loading OTel Demo schema/data into 'otel'..."
+              psql -h "$PGHOST" -U "$PGUSER" -d otel -v ON_ERROR_STOP=1 -f /tmp/init.sql
+              echo "Creating pg_stat_statements extension..."
+              psql -h "$PGHOST" -U "$PGUSER" -d otel \
+                -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements"
+              echo "Verifying seed..."
+              psql -h "$PGHOST" -U "$PGUSER" -d otel \
+                -c "SELECT count(*) AS products FROM catalog.products;" \
+                -c "SELECT count(*) AS reviews  FROM reviews.productreviews;"
+              echo "Seed complete."
+          env:
+            # PGHOST: direct primary service (NOT the PgBouncer LB) for admin DDL.
+            - name: PGHOST
+              value: "demo-pg-primary.everest-dbs.svc"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: everest-secrets-demo-pg
+                  key: user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: everest-secrets-demo-pg
+                  key: password

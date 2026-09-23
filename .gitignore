@@ -1,0 +1,5 @@
+# Local overrides & secrets — never commit tenant tokens or rendered overlays
+dynakube.yaml
+*.local.yaml
+*.kubeconfig
+.DS_Store

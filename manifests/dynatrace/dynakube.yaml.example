@@ -1,0 +1,42 @@
+# DynaKube — Dynatrace monitoring activation. EXAMPLE ONLY (optional part of the tutorial).
+# Copy to dynakube.yaml, set your tenant apiUrl, and apply AFTER the operator is up
+# and the token Secret exists. The Secret is NOT committed (it holds live tokens).
+#
+# Prereq — create the token Secret (tokens from your Dynatrace tenant → Access Tokens):
+#
+#   kubectl -n dynatrace create secret generic openeverest-demo-dynakube \
+#     --from-literal=apiToken=dt0c01.XXXXXXXX \
+#     --from-literal=dataIngestToken=dt0c01.YYYYYYYY
+#
+# apiToken scopes: Installer download, Kubernetes API, Read/Write config,
+#   activeGateTokenManagement, entities read/write, settings read/write.
+# dataIngestToken scopes: Ingest metrics, Ingest OpenTelemetry traces/logs.
+apiVersion: dynatrace.com/v1beta3
+kind: DynaKube
+metadata:
+  name: openeverest-demo
+  namespace: dynatrace
+  annotations:
+    feature.dynatrace.com/k8s-app-enabled: "true"
+spec:
+  apiUrl: https://ENV_ID.live.dynatrace.com/api    # replace ENV_ID with your tenant
+  tokens: openeverest-demo-dynakube
+  oneAgent:
+    cloudNativeFullStack:
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+  activeGate:
+    capabilities:
+      - routing
+      - kubernetes-monitoring
+      - dynatrace-api
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        memory: 1.5Gi
+  metadataEnrichment:
+    enabled: true

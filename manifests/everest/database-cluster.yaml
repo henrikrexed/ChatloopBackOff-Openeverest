@@ -1,0 +1,48 @@
+# Everest DatabaseCluster — a single-node PostgreSQL for the OTel Demo.
+#
+# Provision this AFTER Everest core is installed and the `everest-dbs`
+# namespace + PostgreSQL operator have been added (see scripts/10-install-everest.sh).
+#
+#   kubectl apply -f manifests/everest/database-cluster.yaml
+#   kubectl -n everest-dbs wait --for=jsonpath='{.status.status}'=ready \
+#     databasecluster/demo-pg --timeout=10m
+#
+# Validated against everestctl v1.16.2 / Percona PG operator v3.0.0 (2026-09-23).
+# pg_stat_statements is preloaded so the demo's DB-observability angle
+# (SQLCommenter traces + slow-query stats) works — the extension itself is
+# CREATEd by the seed step (a preloaded library is not an installed extension).
+apiVersion: everest.percona.com/v1alpha1
+kind: DatabaseCluster
+metadata:
+  name: demo-pg
+  namespace: everest-dbs
+spec:
+  engine:
+    type: postgresql
+    # 17.4 is NOT offered by operator v3.0.0 (only 17.7 / 17.9 / 17.10). Pin 17.10.
+    # Verify live: kubectl -n everest-dbs get databaseengine \
+    #   percona-postgresql-operator -o jsonpath='{.status.availableVersions.engine}'
+    version: "17.10"
+    replicas: 1              # single node for a low-risk demo; bump to 3 for the HA talking point
+    storage:
+      size: 25Gi
+      class: local-path      # explicit; do NOT rely on a network-FS default (PG fsync gotcha)
+    resources:
+      cpu: "1"
+      memory: 2G
+    config: |
+      shared_preload_libraries = 'pg_stat_statements'
+      pg_stat_statements.track = all
+  proxy:
+    type: pgbouncer
+    replicas: 1
+    expose:
+      type: LoadBalancer     # was `external` (deprecated in v1.16.2); exposes PgBouncer via your LB
+    resources:
+      cpu: "1"
+      memory: 200M
+  backup:
+    pitr:
+      enabled: false
+  monitoring:
+    resources: {}
