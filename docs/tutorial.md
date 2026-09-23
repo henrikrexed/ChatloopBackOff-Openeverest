@@ -5,10 +5,15 @@
 > PostgreSQL 17.10 · otel-demo chart 0.40.10 / app 2.2.0). Do not change any command or
 > version without re-validating against a real cluster.
 >
-> **Install/teardown (Step 2 + Teardown)** now follow the official OpenEverest **Helm
-> chart** procedure ([1.16.2 docs](https://openeverest.io/documentation/1.16.2/install/install_everest_helm_charts.html)),
-> replacing the earlier `everestctl` path. These two steps are pending a live
-> re-validation on the cluster; everything downstream is unchanged.
+> **Install (Step 2) now follows the official OpenEverest Helm chart procedure**
+> ([1.16.2 docs](https://openeverest.io/documentation/1.16.2/install/install_everest_helm_charts.html)),
+> replacing the earlier `everestctl` path — **re-validated live on 2026-09-23**:
+> Helm core install → `everest-db-namespace` (PostgreSQL-only) → `databaseengine
+> percona-postgresql-operator` v3.0.0 offering PG 17.10 → `demo-pg` provisioned
+> `ready` → seed loaded (`products=10`, `reviews=50`) → swap connection string
+> verified against the PgBouncer LoadBalancer. See the troubleshooting list for the
+> defects this re-validation caught (curl-less seed image, `frontend-proxy` value
+> placement, Helm hook timeout, db-namespace flag keys).
 
 ## What you'll build
 
@@ -95,14 +100,17 @@ This runs:
 ```sh
 # 1) Everest control plane (fixed namespace `everest-system` on 1.16.2)
 helm install everest openeverest/openeverest \
-  --namespace everest-system --create-namespace --version 1.16.2
+  --namespace everest-system --create-namespace --version 1.16.2 \
+  --timeout 15m
 
 # 2) A PostgreSQL-only database namespace. The operator toggles are TOP-LEVEL keys
 #    (pxc=MySQL, psmdb=MongoDB → both disabled; postgresql defaults to true).
 #    NOTE: they are NOT nested under `dbNamespace.*` — `--set dbNamespace.pxc=false`
 #    is silently ignored and installs all three operators.
+#    --timeout 15m: the operator-installer HOOK (OLM) exceeds Helm's default 5m.
 helm install everest openeverest/everest-db-namespace \
   --namespace everest-dbs --create-namespace --version 1.16.2 \
+  --timeout 15m \
   --set pxc=false \
   --set psmdb=false
 
@@ -232,6 +240,7 @@ and removes the residual `*.pgv2.percona.com` CRDs that survive the Helm uninsta
 
 1. The `openeverest/openeverest` core chart doesn't create the DB namespace/operator → install the separate `openeverest/everest-db-namespace` chart.
    - Its operator toggles are **top-level** keys (`pxc` / `psmdb` / `postgresql`), *not* `dbNamespace.*`. `--set dbNamespace.pxc=false` is silently ignored and installs all three operators — use `--set pxc=false --set psmdb=false`.
+   - The `everest-operators-installer` **hook** (OLM) can run longer than Helm's default **5m** `--timeout`, so the install may report `failed`/`pending-install` even though the operator is still coming up. Pass `--timeout 15m` and don't Ctrl-C. A release left `pending-install` must be `helm uninstall`ed before you can re-`helm install`.
 2. PostgreSQL 17.4 unavailable on operator v3.0.0 → pin 17.10.
 3. `expose.type: external` is deprecated → use `LoadBalancer`.
 4. The pguser Secret has **no `uri` key** → build the conn string from `user`/`password`.
@@ -239,3 +248,6 @@ and removes the residual `*.pgv2.percona.com` CRDs that survive the Helm uninsta
 6. The demo uses db `otel` / user `otelu`, **not** `astronomy_db` / `astronomy_user`.
 7. The bundled DB component is `postgresql`, **not** `astronomy-db`.
 8. `helm uninstall` leaves the cluster-scoped Percona CRDs → delete them manually (teardown script does this).
+9. The `postgres:17` image ships `psql` but **no `curl`/`wget`** → the seed fetches `init.sql` via a `curlimages/curl` initContainer into a shared volume (see [`seed-job.yaml`](../manifests/everest/seed-job.yaml)).
+10. `frontend-proxy` is a **component** → it must live under `components:` in the demo values, not at the root (chart 0.40.10's root schema is `additionalProperties: false`). `jaeger`/`grafana`/`prometheus`/`opensearch`/`opentelemetry-collector` stay root-level (they are sub-charts).
+11. `helm install`'s default `--timeout` is **5m**, but the db-namespace chart's OLM operator-installer hook can exceed it → pass `--timeout 15m` (see Step 2).
